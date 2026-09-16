@@ -1,0 +1,4 @@
+spring:
+  application.name: codecycle-project
+  profiles.default: dev
+management.endpoints.web.exposure.include: health,info

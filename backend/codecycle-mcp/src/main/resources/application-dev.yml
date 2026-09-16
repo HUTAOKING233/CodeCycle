@@ -1,0 +1,4 @@
+server.port: 8085
+spring.cloud.nacos.discovery.server-addr: ${NACOS_ADDR:192.168.80.125:8848}
+spring.cloud.nacos.discovery.namespace: ${NACOS_NAMESPACE:public}
+codecycle.mcp.endpoint: ${CODECYCLE_MCP_ENDPOINT:http://localhost:8080/mcp}

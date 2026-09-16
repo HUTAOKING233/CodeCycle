@@ -1,0 +1,8 @@
+server:
+  port: 8080
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:192.168.80.125:8848}
+        namespace: ${NACOS_NAMESPACE:public}

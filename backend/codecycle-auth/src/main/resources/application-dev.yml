@@ -1,0 +1,9 @@
+server.port: 8081
+spring.cloud.nacos.discovery.server-addr: ${NACOS_ADDR:192.168.80.125:8848}
+spring.cloud.nacos.discovery.namespace: ${NACOS_NAMESPACE:public}
+spring.datasource.url: jdbc:postgresql://${POSTGRES_HOST:192.168.80.125}:${POSTGRES_PORT:5432}/${POSTGRES_DB:codecycle}
+spring.datasource.username: ${POSTGRES_USER:codecycle}
+spring.datasource.password: ${POSTGRES_PASSWORD}
+spring.data.redis.host: ${REDIS_HOST:192.168.80.125}
+spring.data.redis.port: ${REDIS_PORT:6379}
+spring.data.redis.password: ${REDIS_PASSWORD}

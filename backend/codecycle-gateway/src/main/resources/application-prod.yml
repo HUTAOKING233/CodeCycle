@@ -1,0 +1,8 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR}
+        namespace: ${NACOS_NAMESPACE:prod}

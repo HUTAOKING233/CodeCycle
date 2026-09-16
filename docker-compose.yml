@@ -1,0 +1,141 @@
+# CodeCycle 开发环境中间件编排（Docker Compose）
+# ------------------------------------------------------------------
+# 运行目标：虚拟机 Docker（VM IP 192.168.80.125；网关 192.168.80.2；Windows 宿主 192.168.80.1）
+# 启动：docker compose --env-file .env up -d
+# 停止：docker compose --env-file .env down          （保留数据卷）
+# 清理：docker compose --env-file .env down -v       （删除全部数据卷，慎用）
+# 说明：
+#   - 容器名/服务名/网络名/卷名全部统一为 codecycle_*，不使用匿名卷与默认位置；
+#   - Windows 宿主上的 6 个 Java 应用进程和 Vue 前端在宿主运行，通过 192.168.80.125:<端口> 访问中间件；容器间互访用服务名；
+#   - 如需把端口只绑定到 VM IP，可将 ports 改为 "192.168.80.125:<端口>:<端口>"。
+name: codecycle
+
+services:
+  postgres:
+    image: pgvector/pgvector@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
+    container_name: codecycle-postgres
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      POSTGRES_DB: ${POSTGRES_DB:-codecycle}
+      POSTGRES_USER: ${POSTGRES_USER:-codecycle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请先在 .env 设置 POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - codecycle_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codecycle} -d ${POSTGRES_DB:-codecycle}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - codecycle-net
+
+  nacos:
+    image: nacos/nacos-server:v2.5.4
+    container_name: codecycle-nacos
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      MODE: standalone
+      NACOS_AUTH_ENABLE: ${NACOS_AUTH_ENABLE:-false}
+      JVM_XMS: 256m
+      JVM_XMX: ${NACOS_JVM_XMX:-512m}
+      JVM_XMN: 128m
+      PREFER_HOST_MODE: ip
+    ports:
+      - "${NACOS_PORT:-8848}:8848"
+      - "${NACOS_GRPC_PORT:-9848}:9848"
+      - "9849:9849"
+    volumes:
+      - codecycle_nacos_data:/home/nacos/data
+      - codecycle_nacos_logs:/home/nacos/logs
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/8848'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - codecycle-net
+
+  redis:
+    image: redis:7.4.11-alpine
+    container_name: codecycle-redis
+    restart: unless-stopped
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请先在 .env 设置 REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - codecycle_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - codecycle-net
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: codecycle-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?请先在 .env 设置 MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?请先在 .env 设置 MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - codecycle_minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - codecycle-net
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    container_name: codecycle-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+      mc mb -p local/codecycle-assets &&
+      mc mb -p local/codecycle-files &&
+      mc anonymous set none local/codecycle-assets &&
+      mc anonymous set none local/codecycle-files &&
+      echo "MinIO buckets ready: codecycle-assets / codecycle-files (private)"
+    restart: "no"
+    networks:
+      - codecycle-net
+
+volumes:
+  codecycle_pg_data:
+    name: codecycle_pg_data
+  codecycle_nacos_data:
+    name: codecycle_nacos_data
+  codecycle_nacos_logs:
+    name: codecycle_nacos_logs
+  codecycle_redis_data:
+    name: codecycle_redis_data
+  codecycle_minio_data:
+    name: codecycle_minio_data
+
+networks:
+  codecycle-net:
+    name: codecycle-net
+    driver: bridge

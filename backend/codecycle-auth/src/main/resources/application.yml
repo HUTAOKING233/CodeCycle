@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: codecycle-auth
+  profiles:
+    default: dev
+management.endpoints.web.exposure.include: health,info

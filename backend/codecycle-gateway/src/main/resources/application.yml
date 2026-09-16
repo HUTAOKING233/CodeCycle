@@ -1,0 +1,36 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+server:
+  forward-headers-strategy: framework
+spring:
+  application:
+    name: codecycle-gateway
+  profiles:
+    default: dev
+  cloud:
+    gateway:
+      routes:
+        - id: auth
+          uri: lb://codecycle-auth
+          predicates: [Path=/api/auth/**]
+        - id: project
+          uri: lb://codecycle-project
+          predicates: [Path=/api/project/**]
+        - id: analysis
+          uri: lb://codecycle-analysis
+          predicates: [Path=/api/analysis/**]
+        - id: review
+          uri: lb://codecycle-analysis
+          predicates: [Path=/api/review/**]
+        - id: knowledge
+          uri: lb://codecycle-knowledge
+          predicates: [Path=/api/knowledge/**]
+        - id: rag
+          uri: lb://codecycle-knowledge
+          predicates: [Path=/api/rag/**]
+        - id: mcp
+          uri: lb://codecycle-mcp
+          predicates: [Path=/mcp/**]

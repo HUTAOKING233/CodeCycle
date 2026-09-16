@@ -1,0 +1,7 @@
+server.port: ${ANALYSIS_PORT:8083}
+spring.cloud.nacos.discovery.server-addr: ${NACOS_ADDR}
+spring.cloud.nacos.discovery.namespace: ${NACOS_NAMESPACE:prod}
+spring.datasource.url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+spring.datasource.username: ${POSTGRES_USER}
+spring.datasource.password: ${POSTGRES_PASSWORD}
+codecycle.analysis.event-source: ${CODECYCLE_ANALYSIS_EVENT_SOURCE:webhook}
