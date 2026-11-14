@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CommonWebConfiguration {
     @Bean
-    RequestIdFilter requestIdFilter() {
-        return new RequestIdFilter();
+    CorrelationIdFilter requestIdFilter() {
+        return new CorrelationIdFilter();
     }
 }

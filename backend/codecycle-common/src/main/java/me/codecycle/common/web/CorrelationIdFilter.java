@@ -14,7 +14,7 @@ import java.util.UUID;
 import org.slf4j.MDC;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class RequestIdFilter extends OncePerRequestFilter {
+public class CorrelationIdFilter extends OncePerRequestFilter {
     public static final String HEADER = "X-Request-Id";
     public static final String ATTRIBUTE = "codecycle.requestId";
 
