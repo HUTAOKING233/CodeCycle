@@ -15,7 +15,7 @@ import org.slf4j.MDC;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorrelationIdFilter extends OncePerRequestFilter {
-    public static final String HEADER = "X-Request-Id";
+    public static final String HEADER = "X-Integration-Correlation-Id";
     public static final String ATTRIBUTE = "codecycle.requestId";
 
     @Override
