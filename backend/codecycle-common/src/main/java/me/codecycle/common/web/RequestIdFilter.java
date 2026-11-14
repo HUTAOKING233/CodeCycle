@@ -6,12 +6,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import java.io.IOException;
 import java.util.UUID;
+import org.slf4j.MDC;
 
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestIdFilter extends OncePerRequestFilter {
     public static final String HEADER = "X-Request-Id";
+    public static final String ATTRIBUTE = "codecycle.requestId";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -21,6 +26,12 @@ public class RequestIdFilter extends OncePerRequestFilter {
             requestId = UUID.randomUUID().toString();
         }
         response.setHeader(HEADER, requestId);
-        filterChain.doFilter(request, response);
+        request.setAttribute(ATTRIBUTE, requestId);
+        MDC.put(ATTRIBUTE, requestId);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove(ATTRIBUTE);
+        }
     }
 }
