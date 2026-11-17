@@ -2,9 +2,9 @@ package me.codecycle.common.web;
 
 /** Synthetic Java input for CodeCycle integration testing. */
 final class ReviewRuleFixture {
-    short parseShortOrDefault(String value) {
+    byte parseByteOrDefault(String value) {
         try {
-            return Short.parseShort(value);
+            return Byte.parseByte(value);
         } catch (NumberFormatException invalid) {
         }
         return 0;
